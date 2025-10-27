@@ -74,11 +74,30 @@ public class SceneManager {
         transitionTimer.start();
     }
 
-    public void showNextScreen() {
+    public void showScene1() {
         parent.removeAll();
-        JPanel next = new Scene1(); //ไปฉากเกมที่ 1
+        JPanel next = new Scene1(this); //ไปฉากเกมที่ 1
         parent.add(next, BorderLayout.CENTER);
         parent.revalidate();
         parent.repaint();
+        next.requestFocusInWindow();
+    }
+
+    public void showScene2(Cat cat) {
+        parent.removeAll();
+        JPanel next = new Scene2(this,cat); //ไปฉากเกมที่ 2
+        parent.add(next, BorderLayout.CENTER);
+        parent.revalidate();
+        parent.repaint();
+        next.requestFocusInWindow();
+    }
+
+    public void showScene3(Cat cat) {
+        parent.removeAll();
+        JPanel next = new Scene3(this,cat); //ไปฉากเกมที่ 3
+        parent.add(next, BorderLayout.CENTER);
+        parent.revalidate();
+        parent.repaint();
+        next.requestFocusInWindow();
     }
 }

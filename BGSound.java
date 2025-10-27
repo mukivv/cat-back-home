@@ -17,6 +17,7 @@ public class BGSound {
             audioIn = AudioSystem.getAudioInputStream(file);
             clip = AudioSystem.getClip();
             clip.open(audioIn);
+            setVolume(0.8f);
             clip.start();
             clip.loop(Clip.LOOP_CONTINUOUSLY);
         } catch (Exception e) {
@@ -60,4 +61,18 @@ public class BGSound {
             clip.close();
         }
     }
+
+    public static void setVolume(float volume) {
+    try {
+        if (clip != null) {
+            FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+            // volume: 0.0 = ปิดเสียง, 1.0 = เสียงดังสุด
+            float range = gainControl.getMaximum() - gainControl.getMinimum();
+            float gain = (range * volume) + gainControl.getMinimum();
+            gainControl.setValue(gain);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
 }

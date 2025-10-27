@@ -21,7 +21,7 @@ class Cutscene extends JPanel {
 
             // Timer จบ cutscene
             Timer t = new Timer(durationMs, e -> {
-               manager.showNextScreen();
+               manager.showScene1();
             });
             t.setRepeats(false);
             t.start();
