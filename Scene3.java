@@ -23,6 +23,18 @@ public class Scene3 extends JPanel implements ActionListener {
     private Image exitImage;
     private Image poisonIcon;
 
+    private Image iconSkill1;
+    private Image iconSkill1_click;
+    private Image iconSkill2;
+    private Image iconSkill2_click;
+    private Image iconHeal;
+    private Image iconHeal_click;
+
+    private Timer skill1BlinkTimer, skill2BlinkTimer, healBlinkTimer;
+    private boolean isSkill1Blinking = false;
+    private boolean isSkill2Blinking = false;
+    private boolean isHealBlinking = false;
+
     public Scene3(SceneManager manager, Cat cat) {
         this.manager = manager; 
         this.cat = cat;
@@ -37,6 +49,7 @@ public class Scene3 extends JPanel implements ActionListener {
         
         // --- สร้างปุ่ม Try Again ---
         setupTryAgainButton();
+        setupBlinkTimers();
 
         // จัดตำแหน่งเริ่มต้นของแมว
         cat.x = 100;
@@ -105,6 +118,8 @@ public class Scene3 extends JPanel implements ActionListener {
                             if (cat.useSkill1()) {
                                 cat.setState("skill1"); // (แสดงท่าโจมตี ไม่ว่าจะโดนหรือไม่)
                                 SFXSound.playSound(1);
+                                isSkill1Blinking = true; // <--- เพิ่ม
+                                skill1BlinkTimer.start(); // <--- เพิ่ม
                                 // --- 3. ตรวจสอบระยะห่าง ---
                                 if (distance <= slime.getHitbox()) {
                                     // (ถ้าอยู่ในระยะโจมตี)
@@ -128,6 +143,8 @@ public class Scene3 extends JPanel implements ActionListener {
                             if (cat.useSkill2()) {
                                 SFXSound.playSound(2); // <--- เล่นเสียง
                                 cat.setState("skill2"); // <--- เล่นท่า
+                                isSkill2Blinking = true; // <--- เพิ่ม
+                                skill2BlinkTimer.start();
                                 
                                 // --- 2. โจมตีทันที (ไม่ต้องเช็กระยะ) ---
                                 slime.takeDamage(cat.getSkill2()); 
@@ -147,6 +164,8 @@ public class Scene3 extends JPanel implements ActionListener {
                             if (cat.useHeal()) {
                                 SFXSound.playSound(3); // <--- เล่นเสียง
                                 cat.setState("heal"); // <--- เล่นท่า
+                                isHealBlinking = true; // <--- เพิ่ม
+                                healBlinkTimer.start();
                                 
                                 // --- 2. ฮีลตัวเอง (10 HP) ---
                                 cat.getHeal(); // เมธอดนี้จะบวก HP 10 ให้เอง
@@ -163,9 +182,12 @@ public class Scene3 extends JPanel implements ActionListener {
             @Override
             public void keyReleased(KeyEvent e) {
                  if (gameState.equals("lose")) return;
-                 if (cat.getState().equals("jump")) {
-                   return;
-                }
+                 if (cat.getState().equals("jump") || 
+                 cat.getState().equals("skill1") ||
+                 cat.getState().equals("skill2") ||
+                 cat.getState().equals("heal")) {
+               return;
+            }
                 cat.setState("stand");
             }
         });
@@ -178,6 +200,13 @@ public class Scene3 extends JPanel implements ActionListener {
         tryAgainClickedIcon = new ImageIcon("image/tryagain_clicked.png");
         exitImage = new ImageIcon("image/exit.png").getImage();
         poisonIcon = new ImageIcon("image/poison.png").getImage();
+
+        iconSkill1 = new ImageIcon("image/iconskill1.png").getImage();
+        iconSkill1_click = new ImageIcon("image/iconskill1_click.png").getImage();
+        iconSkill2 = new ImageIcon("image/iconskill2.png").getImage();
+        iconSkill2_click = new ImageIcon("image/iconskill2_click.png").getImage();
+        iconHeal = new ImageIcon("image/iconheal.png").getImage();
+        iconHeal_click = new ImageIcon("image/iconheal_click.png").getImage();
     }
 
     private void setupTryAgainButton() {
@@ -200,6 +229,19 @@ public class Scene3 extends JPanel implements ActionListener {
         });
         
         add(tryAgainButton);
+    }
+
+    private void setupBlinkTimers() {
+        int blinkDuration = 200; // 200ms (0.2 วินาที)
+
+        skill1BlinkTimer = new Timer(blinkDuration, e -> isSkill1Blinking = false);
+        skill1BlinkTimer.setRepeats(false);
+
+        skill2BlinkTimer = new Timer(blinkDuration, e -> isSkill2Blinking = false);
+        skill2BlinkTimer.setRepeats(false);
+
+        healBlinkTimer = new Timer(blinkDuration, e -> isHealBlinking = false);
+        healBlinkTimer.setRepeats(false);
     }
 
     private void resetScene() {
@@ -306,11 +348,45 @@ public class Scene3 extends JPanel implements ActionListener {
         drawHPBar(g);
         drawMPBar(g);
 
-        if (cat.isPoisoned()) {
-        // (พิกัด x = 60 (เท่าแถบ MP), y = 90 (ใต้แถบ MP))
-            g.drawImage(poisonIcon, 60, 90, this); 
+        int iconY = 90; // ตำแหน่ง Y ของไอคอน
+        int iconX1 = 60;
+        int iconX2 = 100; // (ขยับไป 40px)
+        int iconX3 = 140; // (ขยับไป 40px)
+
+        // วาดไอคอน สกิล 1 (J)
+        if (isSkill1Blinking) {
+            g.drawImage(iconSkill1_click, iconX1, iconY, this);
+        } else if (cat.getMP() < 30) { // <--- เช็ก MP Cost
+            g.drawImage(iconSkill1_click, iconX1, iconY, this);
+        } else {
+            g.drawImage(iconSkill1, iconX1, iconY, this);
         }
-        
+
+        // วาดไอคอน สกิล 2 (K)
+        if (isSkill2Blinking) {
+            g.drawImage(iconSkill2_click, iconX2, iconY, this);
+        } else if (cat.getMP() < 30) { // <--- เช็ก MP Cost
+            g.drawImage(iconSkill2_click, iconX2, iconY, this);
+        } else {
+            g.drawImage(iconSkill2, iconX2, iconY, this);
+        }
+
+        // วาดไอคอน ฮีล (L)
+        if (isHealBlinking) {
+            g.drawImage(iconHeal_click, iconX3, iconY, this);
+        } else if (cat.getMP() < 40) { // <--- เช็ก MP Cost (40 MP)
+            g.drawImage(iconHeal_click, iconX3, iconY, this);
+        } else {
+            g.drawImage(iconHeal, iconX3, iconY, this);
+        }
+
+        // --- วาดไอคอนพิษ (ย้ายตำแหน่ง) ---
+        if (cat.isPoisoned()) {
+            // (พิกัด x = 300 (80% ของหลอด HP)
+            int poisonX = 60 + (int) (300 * 0.8); // 60 + 240 = 300
+            g.drawImage(poisonIcon, poisonX, iconY, this);
+        }
+
         if (!gameState.equals("win")) {
             drawEnemyHPBar(g);
         }
