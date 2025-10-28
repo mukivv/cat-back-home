@@ -21,6 +21,7 @@ public class Slime extends Enemy {
 
     // --- Gameplay State ---
     private boolean isFiringLaser = false;
+    private boolean hasFiredSound = false;
 
     public Slime(float HP, float skill1, float skill2, float heal) {
         super(HP, skill1, skill2, heal); // skill1 จะถูกใช้เป็นค่าดาเมจของเลเซอร์
@@ -58,10 +59,16 @@ public class Slime extends Enemy {
             // --- Logic สำคัญ: ยิงเลเซอร์ในเฟรมสุดท้าย (index 2) ---
             isFiringLaser = (frameIndex == 2);
 
+            if (isFiringLaser && !hasFiredSound) {
+                SFXSound.playSound(0); // <--- เล่นเสียงเลเซอร์
+                hasFiredSound = true; // <--- ตั้งธงว่าเล่นเสียงแล้ว
+            }
+
         } else {
             // "stand" (ท่ายืน)
             frameIndex = (frameIndex + 1) % currentFrames.length;
             isFiringLaser = false; // ท่ายืน ไม่ยิงเลเซอร์
+            hasFiredSound = false;
         }
         
         currentImg = currentFrames[frameIndex];

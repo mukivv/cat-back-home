@@ -103,7 +103,7 @@ public class Scene3 extends JPanel implements ActionListener {
                             // --- 2. ตรวจสอบ MP ---
                             if (cat.useSkill1()) {
                                 cat.setState("skill1"); // (แสดงท่าโจมตี ไม่ว่าจะโดนหรือไม่)
-                                
+                                SFXSound.playSound(1);
                                 // --- 3. ตรวจสอบระยะห่าง ---
                                 if (distance <= slime.getHitbox()) {
                                     // (ถ้าอยู่ในระยะโจมตี)
@@ -222,6 +222,7 @@ public class Scene3 extends JPanel implements ActionListener {
             gameState = "win";
             slime.setState("stand"); 
             System.out.println("YOU WIN");
+            SFXSound.playSound(5);
         }
 
         if (cat.getHP() <= 0) {

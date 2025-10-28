@@ -74,8 +74,21 @@ public class Cat {
     private void updateFrame() {
         if (state.equals("jump")) return;
         Image[] currentFrames = getCurrentFrames();
-        frameIndex = (frameIndex + 1) % currentFrames.length;
-        imgCat = currentFrames[frameIndex];
+        if (state.equals("skill1")) {
+        // --- Logic สำหรับเล่นอนิเมชั่นครั้งเดียว (สำหรับโจมตี) ---
+        frameIndex++;
+        if (frameIndex >= currentFrames.length) {
+            // เมื่อเล่นจนจบ
+            frameIndex = 0; // รีเซ็ตเฟรม
+            setState("stand"); // กลับไปท่ายืน (ซึ่งจะเปลี่ยนรูปทันทีเพราะเราแก้ setState แล้ว)
+        } else {
+            imgCat = currentFrames[frameIndex];
+        }
+         } else {
+        // --- Logic สำหรับเล่นวนซ้ำ (ยืน, เดิน, หมอบ) ---
+            frameIndex = (frameIndex + 1) % currentFrames.length;
+            imgCat = currentFrames[frameIndex];
+        }
     }
 
     private Image[] getCurrentFrames() {
@@ -165,6 +178,11 @@ public class Cat {
                     delay = standDelay; break;
             }
             animationTimer.setDelay(delay);
+            // --- 2 บรรทัดที่เพิ่มเข้ามา (สำคัญมาก!) ---
+            // 1. สั่งให้เปลี่ยนรูปเป็นเฟรมแรกของท่าใหม่ "ทันที"
+            imgCat = getCurrentFrames()[frameIndex]; 
+            // 2. สั่งให้ timer เริ่มนับใหม่ด้วย delay ค่าใหม่ "ทันที"
+            animationTimer.restart();
         }
     }
 
