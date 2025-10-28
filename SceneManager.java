@@ -100,4 +100,19 @@ public class SceneManager {
         parent.repaint();
         next.requestFocusInWindow();
     }
+
+    public void showScene4(Cat cat) {
+        parent.removeAll();
+        JPanel next = new JPanel();
+        next.setBackground(Color.BLACK);
+        JLabel label = new JLabel("SCENE 4 - TO BE CONTINUED...");
+        label.setForeground(Color.WHITE);
+        label.setFont(new Font("Comic Sans MS", Font.BOLD, 30));
+        next.add(label);
+        
+        parent.add(next, BorderLayout.CENTER);
+        parent.revalidate();
+        parent.repaint();
+        // ไม่ต้อง requestFocus() เพราะยังไม่มีการควบคุม
+    }
 }

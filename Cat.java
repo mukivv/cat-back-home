@@ -7,7 +7,7 @@ public class Cat {
     private Image[] walk = new Image[2];
     private Image[] jump = new Image[1];
     private Image[] crouch = new Image[1];
-    private Image[] skill1img = new Image[3];
+    private Image[] skill1img = new Image[1];
     private Image[] skill2img = new Image[1];
     private Image[] healimg = new Image[1];
     private boolean isJumping = false;
@@ -21,6 +21,11 @@ public class Cat {
     private int skill1Delay = 150;
     private int skill2Delay = 300;
     private int healDelay = 300;
+
+    private float maxMP = 100;
+    private float maxHP = 100;
+    private int mpRegenCounter = 0;
+    private int mpRegenTicks = 5; //5*30 scene 3 = ? s re mp
 
     private boolean facingRight = true; // true = หันขวา, false = หันซ้าย
 
@@ -37,7 +42,8 @@ public class Cat {
     public int x, y; // ตำแหน่งบนหน้าจอ
 
     public Cat(float HP, float skill1, float skill2, float heal) {
-        this.HP = HP;
+        this.HP = this.maxHP;
+        this.MP = this.maxMP;
         this.skill1 = skill1;
         this.skill2 = skill2;
         this.heal = heal;
@@ -53,9 +59,7 @@ public class Cat {
          
         crouch[0] = new ImageIcon("image/crouch.png").getImage();
 
-        skill1img[0] = new ImageIcon("image/catSkill1_1.png").getImage();
-        skill1img[1] = new ImageIcon("image/catSkill1_2.png").getImage();
-        skill1img[2] = new ImageIcon("image/catSkill1_3.png").getImage();
+        skill1img[0] = new ImageIcon("image/catSkill1.png").getImage();
 
         skill2img[0] = new ImageIcon("image/catSkill2.png").getImage();
         healimg[0] = new ImageIcon("image/catSkillHeal.png").getImage();
@@ -116,12 +120,25 @@ public class Cat {
     public void draw(Graphics g, Component c) {
         updatePosition();
         Graphics2D g2 = (Graphics2D) g;
-        if (facingRight) {
-            g2.drawImage(imgCat, x, y, Width, Height, c);
-        } else {
-            // พลิก horizontal
-            g2.drawImage(imgCat, x + Width, y, -Width, Height, c);
-        }
+        // --- 1. เลือกขนาดภาพตามสถานะ ---
+    int currentWidth;
+    int currentHeight;
+
+    if (state.equals("skill1")) {
+        currentWidth = 162;
+        currentHeight = Height;
+    } else {
+        currentWidth = Width;
+        currentHeight = Height;
+    }
+
+    // --- 2. ใชขนาดที่เลือกในการวาด ---
+    if (facingRight) {
+        g2.drawImage(imgCat, x, y, currentWidth, currentHeight, c);
+    } else {
+        // พลิก horizontal
+        g2.drawImage(imgCat, x + currentWidth, y, -currentWidth, currentHeight, c);
+    }
     }
 
 
@@ -137,17 +154,15 @@ public class Cat {
             int delay;
             switch (state) {
                 case "walk":
-                    delay = walkDelay;
-                    break;
+                    delay = walkDelay; break;
                 case "jump":
-                    delay = jumpDelay;
-                    break;
+                    delay = jumpDelay; break;
                 case "crouch":
-                    delay = crouchDelay;
-                    break;
+                    delay = crouchDelay; break;
+                case "skill1":
+                    delay = skill1Delay; break;
                 default:
-                    delay = standDelay;
-                    break;
+                    delay = standDelay; break;
             }
             animationTimer.setDelay(delay);
         }
@@ -160,10 +175,19 @@ public class Cat {
         facingRight = right;
     }
 
+    public String getState() {
+        return this.state;
+    }
 
     // --------------------------
     // ฟังก์ชันเกมเพลย์
     // --------------------------
+
+    public void resetStats() {
+        this.HP = this.maxHP;
+        this.MP = this.maxMP;
+    }
+
     public float getSkill1() {
         return this.skill1;
     }
@@ -186,8 +210,34 @@ public class Cat {
         return this.HP;
     }
 
+    public float getMaxHP(){
+        return this.maxHP;
+    }
+
+    public float getMaxMP(){
+        return this.maxMP;
+    }
+
     public float getMP(){
         return this.MP;
+    }
+
+    public void updateMP() {
+        mpRegenCounter++;
+        if (mpRegenCounter >= mpRegenTicks) {
+            mpRegenCounter = 0;
+            if (this.MP < this.maxMP) {
+                this.MP += 1;
+            }
+        }
+    }
+
+    public boolean useSkill1() {
+        if (this.MP >= 30) {
+            this.MP -= 30;
+            return true;
+        }
+        return false;
     }
 
     public int getWidth(){
