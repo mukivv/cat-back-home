@@ -21,6 +21,7 @@ public class Scene3 extends JPanel implements ActionListener {
     private ImageIcon tryAgainIcon;
     private ImageIcon tryAgainClickedIcon;
     private Image exitImage;
+    private Image poisonIcon;
 
     public Scene3(SceneManager manager, Cat cat) {
         this.manager = manager; 
@@ -108,6 +109,7 @@ public class Scene3 extends JPanel implements ActionListener {
                                 if (distance <= slime.getHitbox()) {
                                     // (ถ้าอยู่ในระยะโจมตี)
                                     slime.takeDamage(cat.getSkill1()); 
+                                    cat.applyPoison();
                                     System.out.println("Cat attacks! HIT! Slime HP: " + slime.getHP());
                                 } else {
                                     // (ถ้าไกลเกินไป)
@@ -118,6 +120,43 @@ public class Scene3 extends JPanel implements ActionListener {
                             }
                         }
                         break;
+                    case KeyEvent.VK_K: 
+                        if (gameState.equals("fighting")) { 
+                            if (!cat.getState().equals("stand")) break; 
+
+                            // --- 1. ตรวจสอบ MP (ใช้ 30) ---
+                            if (cat.useSkill2()) {
+                                SFXSound.playSound(2); // <--- เล่นเสียง
+                                cat.setState("skill2"); // <--- เล่นท่า
+                                
+                                // --- 2. โจมตีทันที (ไม่ต้องเช็กระยะ) ---
+                                slime.takeDamage(cat.getSkill2()); 
+                                System.out.println("Cat uses Meow! HIT! Slime HP: " + slime.getHP());
+                            } else {
+                                System.out.println("NOT ENOUGH MP!");
+                            }
+                        }
+                        break;
+                        
+                    // --- โค้ดที่เพิ่มเข้ามา (L) ---
+                    case KeyEvent.VK_L: 
+                        if (gameState.equals("fighting")) {
+                            if (!cat.getState().equals("stand")) break;
+
+                            // --- 1. ตรวจสอบ MP (ใช้ 10) ---
+                            if (cat.useHeal()) {
+                                SFXSound.playSound(3); // <--- เล่นเสียง
+                                cat.setState("heal"); // <--- เล่นท่า
+                                
+                                // --- 2. ฮีลตัวเอง (10 HP) ---
+                                cat.getHeal(); // เมธอดนี้จะบวก HP 10 ให้เอง
+                                System.out.println("Cat heals! HP: " + cat.getHP());
+                            } else {
+                                System.out.println("NOT ENOUGH MP!");
+                            }
+                        }
+                        break;
+                
                 }
             }
 
@@ -138,6 +177,7 @@ public class Scene3 extends JPanel implements ActionListener {
         tryAgainIcon = new ImageIcon("image/tryagain.png");
         tryAgainClickedIcon = new ImageIcon("image/tryagain_clicked.png");
         exitImage = new ImageIcon("image/exit.png").getImage();
+        poisonIcon = new ImageIcon("image/poison.png").getImage();
     }
 
     private void setupTryAgainButton() {
@@ -202,6 +242,8 @@ public class Scene3 extends JPanel implements ActionListener {
             updateEnemyAI();
             checkGameState();
             cat.updateMP(); 
+
+            cat.updatePoisonStatus();
         }
         repaint();
     }
@@ -263,6 +305,11 @@ public class Scene3 extends JPanel implements ActionListener {
         // วาด UI
         drawHPBar(g);
         drawMPBar(g);
+
+        if (cat.isPoisoned()) {
+        // (พิกัด x = 60 (เท่าแถบ MP), y = 90 (ใต้แถบ MP))
+            g.drawImage(poisonIcon, 60, 90, this); 
+        }
         
         if (!gameState.equals("win")) {
             drawEnemyHPBar(g);

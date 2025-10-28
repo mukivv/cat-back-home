@@ -22,6 +22,16 @@ public class Cat {
     private int skill2Delay = 300;
     private int healDelay = 300;
 
+    // --- ตัวแปรสถานะพิษ (Poison) ---
+    private boolean isPoisoned = false;
+    private int poisonTicksLeft = 0; // (นับถอยหลัง 5 ครั้ง)
+    private int poisonTimer = 0;     // (ตัวนับเวลา 2 วินาที)
+    
+    // 2 วินาที (2000ms) / 30ms (ความเร็ว timer ของ Scene3) ≈ 67 ticks
+    private final int POISON_INTERVAL_TICKS = 67; 
+    private final int POISON_DAMAGE_PER_TICK = 10;
+    private final int POISON_TOTAL_TICKS = 5;
+
     private float maxMP = 100;
     private float maxHP = 100;
     private int mpRegenCounter = 0;
@@ -74,7 +84,7 @@ public class Cat {
     private void updateFrame() {
         if (state.equals("jump")) return;
         Image[] currentFrames = getCurrentFrames();
-        if (state.equals("skill1")) {
+        if (state.equals("skill1") || state.equals("skill2") || state.equals("heal")) {
         // --- Logic สำหรับเล่นอนิเมชั่นครั้งเดียว (สำหรับโจมตี) ---
         frameIndex++;
         if (frameIndex >= currentFrames.length) {
@@ -137,7 +147,7 @@ public class Cat {
     int currentWidth;
     int currentHeight;
 
-    if (state.equals("skill1")) {
+    if (state.equals("skill1") || state.equals("skill2") || state.equals("heal")) {
         currentWidth = 162;
         currentHeight = Height;
     } else {
@@ -174,6 +184,10 @@ public class Cat {
                     delay = crouchDelay; break;
                 case "skill1":
                     delay = skill1Delay; break;
+                case "skill2":
+                    delay = skill2Delay; break;
+                case "skill3":
+                    delay = healDelay; break;
                 default:
                     delay = standDelay; break;
             }
@@ -204,6 +218,9 @@ public class Cat {
     public void resetStats() {
         this.HP = this.maxHP;
         this.MP = this.maxMP;
+        this.isPoisoned = false;
+        this.poisonTicksLeft = 0;
+        this.poisonTimer = 0;
     }
 
     public float getSkill1() {
@@ -258,7 +275,71 @@ public class Cat {
         return false;
     }
 
+    public boolean useSkill2() {
+        if (this.MP >= 30) { // ใช้ MP 30 (เท่าสกิลแรก)
+            this.MP -= 30;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean useHeal() {
+        if (this.MP >= 40) { // ใช้ MP 10
+            this.MP -= 40;
+            return true;
+        }
+        return false;
+    }
+
+    // --- เมธอดสำหรับระบบพิษ (เพิ่มใหม่) ---
+
+    // 1. เมธอดสั่งให้ติดพิษ (เรียกจาก Scene3)
+    public void applyPoison() {
+        if (isPoisoned) return; // ถ้าติดพิษอยู่แล้ว, ไม่ต้องทำอะไรซ้ำ
+
+        isPoisoned = true;
+        poisonTicksLeft = POISON_TOTAL_TICKS; // ตั้งค่าให้โดน 5 ครั้ง
+        poisonTimer = POISON_INTERVAL_TICKS;  // เริ่มนับ 2 วินาทีแรก
+        
+        SFXSound.playSound(6); // <--- เล่นเสียง (เมื่อคุณใส่ไฟล์)
+        System.out.println("Cat is POISONED!");
+    }
+
+    // 2. เมธอดอัปเดตสถานะพิษ (เรียกทุกเฟรมจาก Scene3)
+    public void updatePoisonStatus() {
+        if (!isPoisoned) return; // ถ้าไม่ติดพิษ, ออกทันที
+
+        poisonTimer--; // นับถอยหลังทุกเฟรม
+        
+        if (poisonTimer <= 0) {
+            // --- เมื่อครบ 2 วินาที ---
+            this.setHP(POISON_DAMAGE_PER_TICK); // ลดเลือด 10
+            System.out.println("Poison tick! HP: " + this.getHP());
+            
+            poisonTicksLeft--; // ลดจำนวนครั้งที่เหลือ
+            
+            if (poisonTicksLeft <= 0) {
+                // --- ถ้าครบ 5 ครั้ง ---
+                isPoisoned = false; // หายพิษ
+                System.out.println("Poison has worn off.");
+            } else {
+                // --- ถ้ายังไม่ครบ 5 ครั้ง ---
+                poisonTimer = POISON_INTERVAL_TICKS; // รีเซ็ตตัวนับ 2 วินาทีใหม่
+            }
+        }
+    }
+
+    // 3. เมธอดสำหรับเช็กสถานะ (เพื่อวาดไอคอน)
+    public boolean isPoisoned() {
+        return isPoisoned;
+    }
+    // --- สิ้นสุดเมธอดระบบพิษ ---
+
     public int getWidth(){
         return this.Width;
+    }
+
+    public int getHeight(){
+        return this.Height;
     }
 }
