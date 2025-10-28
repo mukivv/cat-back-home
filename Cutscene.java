@@ -4,7 +4,7 @@ import javax.swing.*;
 class Cutscene extends JPanel {
         static String[] sceneName = {
             "image/eyeCutscene.gif",
-            "background_music.wav",
+            "image/endCutScene.gif",
             "victory_sound.wav"
         };
 

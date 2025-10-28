@@ -13,7 +13,7 @@ public class Scene1 extends JPanel implements ActionListener {
 
         // สร้างวัตถุต่าง ๆ
         floor = new Floor();
-        cat = new Cat(100, 20, 15, 10);
+        cat = new Cat(100, 20, 10, 15);
 
         // จัดตำแหน่งเริ่มต้นของแมว
         cat.x = 100;

@@ -10,6 +10,7 @@ public class Cat {
     private Image[] skill1img = new Image[1];
     private Image[] skill2img = new Image[1];
     private Image[] healimg = new Image[1];
+    private Image[] dead = new Image[1];
     private boolean isJumping = false;
     private int jumpVelocity = 0;
     private int Width = 143;
@@ -74,6 +75,8 @@ public class Cat {
         skill2img[0] = new ImageIcon("image/catSkill2.png").getImage();
         healimg[0] = new ImageIcon("image/catSkillHeal.png").getImage();
 
+        dead[0] = new ImageIcon("image/catDead.png").getImage();
+
         imgCat = stand[0];
 
         // ตั้ง Timer เพื่อเปลี่ยนเฟรมทุก 150ms
@@ -113,6 +116,8 @@ public class Cat {
                 return skill2img;
             case "heal":
                 return healimg;
+            case "dead":
+                return dead;
             default:
                 return stand;
         }

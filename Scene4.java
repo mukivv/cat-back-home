@@ -4,24 +4,27 @@ import java.io.File;
 import javax.sound.sampled.*;
 import javax.swing.*;
 
-public class Scene3 extends JPanel implements ActionListener {
+public class Scene4 extends JPanel implements ActionListener {
     private Cat cat;
     private Floor floor = new Floor();
     private Timer timer;
     private SceneManager manager; 
     private Color blue = new Color(34, 64, 111);
 
-    private Slime slime;
+    private DadCat dad;
     
     private String gameState = "fighting"; // สถานะ: fighting, win, lose
-    private int enemyAttackCooldown = 100; 
+    private int enemyDecisionCooldown = 0;
+    private final int DECISION_COOLDOWN = 150;
+    private String enemyBehavior = "idle"; // พฤติกรรมปัจจุบัน: idle, approaching, attacking
+    private boolean enemyMovingRight = true; // ทิศทางการเดินไปมา
+    private int enemyIdleTimer = 0; // ตัวนับสำหรับการเดินไปมา
 
     // --- ตัวแปรสำหรับ Win/Lose ---
     private JButton tryAgainButton;
     private ImageIcon tryAgainIcon;
     private ImageIcon tryAgainClickedIcon;
     private Image exitImage;
-    private Image poisonIcon;
 
     private Image iconSkill1;
     private Image iconSkill1_click;
@@ -35,23 +38,20 @@ public class Scene3 extends JPanel implements ActionListener {
     private boolean isSkill2Blinking = false;
     private boolean isHealBlinking = false;
 
-    public Scene3(SceneManager manager, Cat cat) {
+    public Scene4(SceneManager manager, Cat cat) {
         this.manager = manager; 
         this.cat = cat;
+        cat.resetStats();
         setLayout(null); 
         setBackground(Color.WHITE);
 
-        // --- สร้าง Slime ---
-        slime = new Slime(100, 10, 0, 0); 
+        dad = new DadCat();
 
-        // --- โหลดรูปภาพสำหรับ Win/Lose ---
         loadImages();
         
-        // --- สร้างปุ่ม Try Again ---
         setupTryAgainButton();
         setupBlinkTimers();
 
-        // จัดตำแหน่งเริ่มต้นของแมว
         cat.x = 100;
         cat.y = 330;
         cat.setState("stand"); 
@@ -77,16 +77,16 @@ public class Scene3 extends JPanel implements ActionListener {
                             // ถ้าชนะแล้ว, เช็กว่าเดินถึงขอบจอหรือยัง
                             if (cat.x + cat.getWidth()/2 > 800) {
                                 timer.stop(); // หยุดเกมก่อนเปลี่ยนฉาก
-                                manager.showScene4(cat); 
+                                manager.showScene5(cat); 
                              }
                         } else {
                             // ถ้ายังสู้, ไม่ให้เดินเลยกลางจอ
                             int catFront = cat.x + cat.getWidth();
-                            int slimeFront = slime.x;
+                            int dadFront = dad.x;
 
-                            // ถ้าด้านหน้าของแมว เกือบจะชน Slime ก็ให้หยุด
-                            if (catFront > slimeFront) { 
-                            cat.x = slimeFront - cat.getWidth(); // ให้แมวหยุดพอดี
+                            // ถ้าด้านหน้าของแมว เกือบจะชน dad ก็ให้หยุด
+                            if (catFront > dadFront) { 
+                            cat.x = dadFront - cat.getWidth(); // ให้แมวหยุดพอดี
                         }
                         }
                         cat.setState("walk");
@@ -111,8 +111,8 @@ public class Scene3 extends JPanel implements ActionListener {
 
                             // --- 1. คำนวณระยะห่าง ---
                             int catFront = cat.x + cat.getWidth();
-                            int slimeFront = slime.x;
-                            int distance = slimeFront - catFront; // ระยะห่างระหว่างด้านหน้าของแมวกับ Slime
+                            int dadFront = dad.x;
+                            int distance = dadFront - catFront; // ระยะห่างระหว่างด้านหน้าของแมวกับ Slime
 
                             // --- 2. ตรวจสอบ MP ---
                             if (cat.useSkill1()) {
@@ -121,11 +121,10 @@ public class Scene3 extends JPanel implements ActionListener {
                                 isSkill1Blinking = true; // <--- เพิ่ม
                                 skill1BlinkTimer.start(); // <--- เพิ่ม
                                 // --- 3. ตรวจสอบระยะห่าง ---
-                                if (distance <= slime.getHitbox()) {
+                                if (distance <= dad.getHitbox()) {
                                     // (ถ้าอยู่ในระยะโจมตี)
-                                    slime.takeDamage(cat.getSkill1()); 
-                                    cat.applyPoison();
-                                    System.out.println("Cat attacks! HIT! Slime HP: " + slime.getHP());
+                                    dad.takeDamage(cat.getSkill1()); 
+                                    System.out.println("Cat attacks! HIT! Dad HP: " + dad.getHP());
                                 } else {
                                     // (ถ้าไกลเกินไป)
                                     System.out.println("Cat attacks! MISS! (Too far)");
@@ -147,8 +146,8 @@ public class Scene3 extends JPanel implements ActionListener {
                                 skill2BlinkTimer.start();
                                 
                                 // --- 2. โจมตีทันที (ไม่ต้องเช็กระยะ) ---
-                                slime.takeDamage(cat.getSkill2()); 
-                                System.out.println("Cat uses Meow! HIT! Slime HP: " + slime.getHP());
+                                dad.takeDamage(cat.getSkill2()); 
+                                System.out.println("Cat uses Meow! HIT! Slime HP: " + dad.getHP());
                             } else {
                                 System.out.println("NOT ENOUGH MP!");
                             }
@@ -199,7 +198,6 @@ public class Scene3 extends JPanel implements ActionListener {
         tryAgainIcon = new ImageIcon("image/tryagain.png");
         tryAgainClickedIcon = new ImageIcon("image/tryagain_clicked.png");
         exitImage = new ImageIcon("image/exit.png").getImage();
-        poisonIcon = new ImageIcon("image/poison.png").getImage();
 
         iconSkill1 = new ImageIcon("image/iconskill1.png").getImage();
         iconSkill1_click = new ImageIcon("image/iconskill1_click.png").getImage();
@@ -250,14 +248,14 @@ public class Scene3 extends JPanel implements ActionListener {
         
         // 2. รีเซ็ตค่าพลัง
         cat.resetStats();
-        slime.resetHP(); 
+        dad.resetHP(); 
         
         // 3. รีเซ็ตตำแหน่ง
         cat.x = 100;
         cat.y = 330;
         cat.setState("stand");
         
-        slime.setState("stand");
+        dad.setState("stand");
         
         // 4. ซ่อนปุ่ม
         tryAgainButton.setVisible(false);
@@ -284,35 +282,122 @@ public class Scene3 extends JPanel implements ActionListener {
             updateEnemyAI();
             checkGameState();
             cat.updateMP(); 
-
-            cat.updatePoisonStatus();
         }
         repaint();
     }
 
     private void updateEnemyAI() {
-        if (enemyAttackCooldown > 0) {
-            enemyAttackCooldown--;
+    // ลดคูลดาวน์
+    if (enemyDecisionCooldown > 0) {
+        enemyDecisionCooldown--;
+        
+        // ระหว่างคูลดาวน์ให้เดินไปมา
+        enemyIdleTimer++;
+        
+        // เปลี่ยนทิศทางทุก 1 วินาที (30 ticks)
+        if (enemyIdleTimer >= 30) {
+            enemyIdleTimer = 0;
+            enemyMovingRight = !enemyMovingRight;
         }
+        
+        // ตั้งค่า state และทิศทาง
+        if (!dad.getState().equals("skill1") && !dad.getState().equals("skill2") && !dad.getState().equals("heal")) {
+            dad.setState("walk");
+            dad.setDirection(!enemyMovingRight); // หัน facingLeft
+            
+            if (enemyMovingRight) {
+                dad.x += 5; // เพิ่มความเร็วให้เห็นชัดขึ้น
+                if (dad.x > 600) { // ขยายขอบเขต
+                    dad.x = 600;
+                    enemyMovingRight = false;
+                }
+            } else {
 
-        if (enemyAttackCooldown == 0 && slime.getState().equals("stand")) {
-            slime.setState("attack"); 
-            enemyAttackCooldown = 100 + (int)(Math.random() * 50); 
+                int dadFront = dad.x;
+                int catBack = cat.x + cat.getWidth();
+
+                if (dadFront > catBack) { // เช็กว่ายังไม่ชน cat
+                    dad.x -= 5; // เพิ่มความเร็วให้เห็นชัดขึ้น
+                }
+                if (dad.x < 200) { // ขยายขอบเขต
+                    dad.x = 200;
+                    enemyMovingRight = true;
+                }
+            }
+        }
+        
+        return; // ยังไม่ถึงเวลาตัดสินใจ
+    }
+    
+    // ถึงเวลาตัดสินใจแล้ว!
+    
+    // คำนวณระยะห่างระหว่าง dad กับ cat
+    int catFront = cat.x + cat.getWidth();
+    int dadFront = dad.x;
+    int distance = Math.abs(dadFront - catFront);
+    
+    // ตัดสินใจตามระยะห่าง
+    if (distance > 100) {
+        // ไกลเกิน 100 -> ใช้สกิล 2 (โจมตีระยะไกล)
+        dad.setState("skill2");
+        dad.setDirection(true); // หันหน้าไปทางซ้าย (หาแมว)
+        SFXSound.playSound(7);
+        
+        // ทำดาเมจให้แมวถ้าแมวไม่กดย่อ
+        if (!cat.getState().equals("crouch")){
+            cat.setHP(dad.getSkill2());
+            System.out.println("Dad uses Skill 2! Cat HP: " + cat.getHP());
+        }
+        
+        enemyDecisionCooldown = DECISION_COOLDOWN; // รีเซ็ตคูลดาวน์
+        enemyIdleTimer = 0;
+
+    } else {
+        // ใกล้กว่า 100 -> เดินเข้าหาแล้วใช้สกิล 1
+
+        // เดินเข้าหาก่อน
+        if (distance > 20) {
+            dad.setState("walk");
+            dad.setDirection(true); // หันหน้าไปทางซ้าย
+
+            int catBack = cat.x + cat.getWidth();
+
+            if (dadFront > catBack) { // เช็กก่อนว่า dad ยังอยู่ด้านขวาของ cat (ยังไม่ชน)
+                dad.x -= 5; // ถ้ายังไม่ชน ก็เดินเข้าหา
+
+                // เช็กอีกทีว่าเดินแล้วชนพอดีมั้ย
+                if (dad.x < catBack) {
+                    dad.x = catBack; // ถ้าเดินแล้วชน ให้หยุดตรงนั้น
+                }
+            }
+        } else {
+            // ถึงระยะโจมตีแล้ว -> ใช้สกิล 1
+            dad.setState("skill1");
+            dad.setDirection(true); // หันหน้าไปทางซ้าย
+            SFXSound.playSound(1);
+
+            // ทำดาเมจให้แมวทันที
+            cat.setHP(dad.getSkill1());
+            System.out.println("Dad uses Skill 1! Cat HP: " + cat.getHP());
+            
+            enemyDecisionCooldown = DECISION_COOLDOWN; // รีเซ็ตคูลดาวน์
+            enemyIdleTimer = 0;
         }
     }
+}
 
     private void checkGameState() {
-        if (slime.getHP() <= 0) {
+        if (dad.getHP() <= 0) {
             gameState = "win";
-            slime.setState("stand"); 
+            dad.setState("stand"); 
             System.out.println("YOU WIN");
             SFXSound.playSound(5);
         }
 
         if (cat.getHP() <= 0) {
             gameState = "lose";
+            dad.setState("stand");
             cat.setState("dead");
-            slime.setState("stand");
             System.out.println("GAME OVER");
             tryAgainButton.setVisible(true); 
         }
@@ -324,26 +409,10 @@ public class Scene3 extends JPanel implements ActionListener {
         floor.draw(g);
         
         if (!gameState.equals("win")) {
-            slime.draw(g, this);
+            dad.draw(g, this);
         }
         
         cat.draw(g, this);
-
-        if (slime.isFiringLaser() && !gameState.equals("win")) {
-            int laserY = slime.y + 78; 
-            int laserHeight = 13;
-            
-            g.setColor(new Color(34, 64, 111)); 
-            g.fillRect(0, laserY, slime.x, laserHeight); 
-
-            Rectangle laserRect = new Rectangle(0, laserY, slime.x, laserHeight);
-            Rectangle catRect = new Rectangle(cat.x, cat.y, cat.getWidth(), 105); 
-
-            if (laserRect.intersects(catRect) && !cat.getState().equals("jump")) {
-                 cat.setHP(slime.getLaserDamage()); 
-                 System.out.println("Cat hit by laser! HP: " + cat.getHP());
-            }
-        }
 
         // วาด UI
         drawHPBar(g);
@@ -379,13 +448,6 @@ public class Scene3 extends JPanel implements ActionListener {
             g.drawImage(iconHeal_click, iconX3, iconY, this);
         } else {
             g.drawImage(iconHeal, iconX3, iconY, this);
-        }
-
-        // --- วาดไอคอนพิษ (ย้ายตำแหน่ง) ---
-        if (cat.isPoisoned()) {
-            // (พิกัด x = 300 (80% ของหลอด HP)
-            int poisonX = 60 + (int) (300 * 0.8); // 60 + 240 = 300
-            g.drawImage(poisonIcon, poisonX, iconY, this);
         }
 
         if (!gameState.equals("win")) {
@@ -447,8 +509,8 @@ public class Scene3 extends JPanel implements ActionListener {
     // -----------------------------
     private void drawEnemyHPBar(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
-        int maxHP = (int) slime.getMaxHP(); // (เราตั้งค่า Slime HP 100 ตอนสร้าง)
-        float currentHP = slime.getHP();
+        int maxHP = (int) dad.getMaxHP();
+        float currentHP = dad.getHP();
         if (currentHP < 0) currentHP = 0;
         if (currentHP > maxHP) currentHP = maxHP;
         int barWidth = 300;

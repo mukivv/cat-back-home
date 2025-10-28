@@ -103,16 +103,56 @@ public class SceneManager {
 
     public void showScene4(Cat cat) {
         parent.removeAll();
-        JPanel next = new JPanel();
-        next.setBackground(Color.BLACK);
-        JLabel label = new JLabel("SCENE 4 - TO BE CONTINUED...");
-        label.setForeground(Color.WHITE);
-        label.setFont(new Font("Comic Sans MS", Font.BOLD, 30));
-        next.add(label);
-        
+        JPanel next = new Scene4(this,cat); //ไปฉากเกมที่ 3
         parent.add(next, BorderLayout.CENTER);
         parent.revalidate();
         parent.repaint();
+        next.requestFocusInWindow();
+    }
+
+    public void showScene5(Cat cat) {
+        parent.removeAll();
+        JPanel next = new Scene5(this,cat); //ไปฉากเกมที่ 3
+        parent.add(next, BorderLayout.CENTER);
+        parent.revalidate();
+        parent.repaint();
+        next.requestFocusInWindow();
         // ไม่ต้อง requestFocus() เพราะยังไม่มีการควบคุม
+    }
+
+    public void showScene6() {
+        // 1. ล้างจอ
+        parent.removeAll();
+        // (เราจะใช้ BorderLayout.CENTER เพื่อให้ GIF อยู่ตรงกลาง)
+        parent.setLayout(new BorderLayout()); 
+
+        // 2. โหลด GIF ที่คุณต้องการเล่น
+        // ⭐️ (เปลี่ยน "image/your-ending-gif.gif" เป็นชื่อไฟล์ GIF ของคุณ)
+        ImageIcon endingGif = new ImageIcon("image/endCutScene.gif");
+        JLabel gifLabel = new JLabel(endingGif);
+
+        // (เผื่อ GIF มีพื้นหลังโปร่งใส ให้ตั้งค่าสีพื้นหลัง)
+        gifLabel.setOpaque(true);
+        gifLabel.setBackground(this.bg); // (ใช้สี bg จาก Manager)
+
+        // 3. เพิ่ม GIF เข้าไปในจอ
+        parent.add(gifLabel, BorderLayout.CENTER);
+        parent.revalidate();
+        parent.repaint();
+
+        BGSound.playSound(1);
+
+        // 4. (สำคัญ!) ตั้งเวลาให้ตรงกับความยาว GIF
+        // ⭐️ (คุณต้องหาความยาว GIF ของคุณเอง แล้วใส่ค่าเป็นมิลลิวินาที)
+        //    (ตัวอย่าง: ถ้า GIF ยาว 8.5 วินาที ให้ใส่ 8500)
+        int gifDurationInMs = 30000; // <--- แก้ค่านี้! (8000 = 8 วินาที)
+
+        Timer backToHomeTimer = new Timer(gifDurationInMs, (e) -> {
+            // 5. พอครบ 8 วินาที (GIF เล่นจบ) ก็เรียกหน้า Home
+            showHomeScreen();
+        });
+        
+        backToHomeTimer.setRepeats(false); // (สำคัญ) ให้ทำงานแค่ครั้งเดียว
+        backToHomeTimer.start();
     }
 }

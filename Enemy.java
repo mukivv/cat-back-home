@@ -18,6 +18,9 @@ public abstract class Enemy {
         this.heal = heal;
     }
 
+    public Enemy() {
+    }
+
     public float autoheal() {
         this.HP += heal;
         return this.HP;
@@ -30,11 +33,19 @@ public abstract class Enemy {
         return this.HP;
     }
 
+    public float getMaxHP() {
+        return this.maxHP;
+    }
+
     public void resetHP() {
         this.HP = this.maxHP;
     }
 
     public void takeDamage(float damage) {
         this.HP -= damage;
+    }
+
+    public int getHitbox(){
+        return hitbox;
     }
 }

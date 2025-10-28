@@ -9,7 +9,8 @@ public class SFXSound {
         "sound/catHeal.wav",
         "sound/HumanWalk.wav",
         "sound/win.wav",
-        "sound/poison.wav"
+        "sound/poison.wav",
+        "sound/dadSound.wav"
     };
 
     public static void playSound(int n) {

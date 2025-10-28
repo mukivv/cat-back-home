@@ -110,10 +110,6 @@ public class Slime extends Enemy {
         return state;
     }
 
-    public int getHitbox(){
-        return super.hitbox;
-    }
-
     // เมธอดนี้สำคัญมาก! Scene3 จะใช้เช็กว่าต้องวาดเลเซอร์ไหม
     public boolean isFiringLaser() {
         return isFiringLaser;

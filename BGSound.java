@@ -4,8 +4,7 @@ import javax.sound.sampled.*;
 public class BGSound {
     static String[] bgSong = {
         "sound/HomeSound.wav",
-        "background_music.wav",
-        "victory_sound.wav"
+        "sound/endGame.wav",
     };
 
     static Clip clip;
