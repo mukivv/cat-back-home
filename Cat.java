@@ -18,7 +18,13 @@ public class Cat {
     private int width = 143;
     private int height = 105;
 
-    private int Delay = 600;
+    private int standDelay = 600;
+    private int walkDelay = 150;
+    private int jumpDelay = 300;
+    private int crouchDelay = 300;
+    private int skill1Delay = 150;
+    private int skill2Delay = 300;
+    private int healDelay = 300;
 
     private boolean isPoisoned = false;
     private int poisonNumLeft = 0;
@@ -70,7 +76,7 @@ public class Cat {
 
         imgCat = stand[0];
 
-        animationTimer = new Timer(Delay, e -> updateFrame());
+        animationTimer = new Timer(standDelay, e -> updateFrame());
         animationTimer.start();
     }
 
@@ -160,19 +166,19 @@ public class Cat {
             int delay;
             switch (state) {
                 case "walk":
-                    delay = 150; break;
+                    delay = walkDelay; break;
                 case "jump":
-                    delay = 300; break;
+                    delay = jumpDelay; break;
                 case "crouch":
-                    delay = 300; break;
+                    delay = crouchDelay; break;
                 case "skill1":
-                    delay = 150; break;
+                    delay = skill1Delay; break;
                 case "skill2":
-                    delay = 300; break;
+                    delay = skill2Delay; break;
                 case "skill3":
-                    delay = 300; break;
+                    delay = healDelay; break;
                 default:
-                    delay = Delay; break;
+                    delay = standDelay; break;
             }
             animationTimer.setDelay(delay);
 
