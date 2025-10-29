@@ -3,135 +3,95 @@ import javax.swing.*;
 
 public class Slime extends Enemy {
 
-    // --- Animation & State ---
     private Image currentImg;
-    private Image[] standFrames = new Image[2];
-    private Image[] attackFrames = new Image[3];
+    private Image[] stand = new Image[2];
+    private Image[] attack = new Image[3];
     private Timer animationTimer;
-    private String state = "stand";
-    private int frameIndex = 0;
-    private int standDelay = 600; // ms
-    private int attackDelay = 250; // ms ต่อเฟรม (เพื่อให้ 3 ภาพแสดงผลเร็วขึ้น)
 
-    // --- Position & Size ---
-    public int x = 600; // ตำแหน่งเริ่มต้น
+    private int indexFrame = 0;
+    private int standDelay = 600;
+    private int attackDelay = 250;
+
+    public int x = 600;
     public int y = 330;
-    public int Width = 143;
-    public int Height = 105;
 
-    // --- Gameplay State ---
-    private boolean isFiringLaser = false;
-    private boolean hasFiredSound = false;
+    private boolean shootLaser = false;
 
-    public Slime(float HP, float skill1, float skill2, float heal) {
-        super(HP, skill1, skill2, heal); // skill1 จะถูกใช้เป็นค่าดาเมจของเลเซอร์
+    public Slime() {
+        super(100, 10, 0,143,105,600,330);
 
-        this.HP = HP; 
-        this.maxHP = HP;
+        stand[0] = new ImageIcon("image/slimeStand1.png").getImage();
+        stand[1] = new ImageIcon("image/slimeStand2.png").getImage();
 
-        // โหลดภาพอนิเมชันท่ายืน
-        standFrames[0] = new ImageIcon("image/slimeStand1.png").getImage();
-        standFrames[1] = new ImageIcon("image/slimeStand2.png").getImage();
+        attack[0] = new ImageIcon("image/slimeSkill1.png").getImage();
+        attack[1] = new ImageIcon("image/slimeSkill2.png").getImage();
+        attack[2] = new ImageIcon("image/slimeSkill3.png").getImage();
 
-        // โหลดภาพอนิเมชันท่าโจมตี 3 ภาพ
-        attackFrames[0] = new ImageIcon("image/slimeSkill1.png").getImage();
-        attackFrames[1] = new ImageIcon("image/slimeSkill2.png").getImage();
-        attackFrames[2] = new ImageIcon("image/slimeSkill3.png").getImage();
+        state = "stand";
+        currentImg = stand[0];
 
-        currentImg = standFrames[0];
-
-        // สร้าง Timer ของ Slime เอง
         animationTimer = new Timer(standDelay, e -> updateFrame());
         animationTimer.start();
     }
 
-    private void updateFrame() {
-        Image[] currentFrames = getCurrentFrames();
+    @Override
+    protected void updateFrame() {
+        Image[] currentFrames = getCurrentFrame();
 
         if (state.equals("attack")) {
-            frameIndex++;
-            if (frameIndex >= currentFrames.length) {
-                // ถ้าเล่นอนิเมชันโจมตีจบ
-                frameIndex = 0;
-                setState("stand"); // กลับไปท่ายืน
+            indexFrame++;
+            if (indexFrame >= currentFrames.length) {
+                indexFrame = 0;
+                setState("stand");
             }
             
-            // --- Logic สำคัญ: ยิงเลเซอร์ในเฟรมสุดท้าย (index 2) ---
-            isFiringLaser = (frameIndex == 2);
-
-            if (isFiringLaser && !hasFiredSound) {
-                SFXSound.playSound(0); // <--- เล่นเสียงเลเซอร์
-                hasFiredSound = true; // <--- ตั้งธงว่าเล่นเสียงแล้ว
+            shootLaser = (indexFrame == 2);
+            if (indexFrame == 2) {
+                Sound.playSoundEffect(0);
             }
 
         } else {
-            // "stand" (ท่ายืน)
-            frameIndex = (frameIndex + 1) % currentFrames.length;
-            isFiringLaser = false; // ท่ายืน ไม่ยิงเลเซอร์
-            hasFiredSound = false;
+            indexFrame = (indexFrame + 1) % currentFrames.length;
+            shootLaser = false;
         }
         
-        currentImg = currentFrames[frameIndex];
+        currentImg = currentFrames[indexFrame];
     }
 
-    private Image[] getCurrentFrames() {
+    @Override
+    protected Image[] getCurrentFrame() {
         if (state.equals("attack")) {
-            return attackFrames;
+            return attack;
         } else {
-            return standFrames; // default
+            return stand;
         }
     }
 
+    @Override
     public void draw(Graphics g, Component c) {
         Graphics2D g2 = (Graphics2D) g;
-        // วาดแบบกลับด้าน (ให้หันหน้าไปทางซ้ายหาแมว)
-        g2.drawImage(currentImg, x, y, Width, Height, c);
+        g2.drawImage(currentImg, x, y, width, height, c);
     }
 
-    // --- เมธอดสำหรับให้ Scene3 เรียกใช้ ---
-
+    @Override
     public void setState(String newState) {
-        if (state.equals(newState)) return; // ไม่ต้องรีเซ็ตถ้าอยู่ในสถานะเดิม
+        if (state.equals(newState)) return;
 
         state = newState;
-        frameIndex = 0; // รีเซ็ตเฟรมอนิเมชัน
+        indexFrame = 0;
 
         if (state.equals("attack")) {
             animationTimer.setDelay(attackDelay);
-            isFiringLaser = false; // เลเซอร์จะยิงแค่ในเฟรมที่ 3
+            shootLaser = false;
         } else {
             // "stand"
             animationTimer.setDelay(standDelay);
-            isFiringLaser = false;
+            shootLaser = false;
         }
     }
 
-    public String getState() {
-        return state;
+    public boolean shootLaser() {
+        return shootLaser;
     }
 
-    // เมธอดนี้สำคัญมาก! Scene3 จะใช้เช็กว่าต้องวาดเลเซอร์ไหม
-    public boolean isFiringLaser() {
-        return isFiringLaser;
-    }
-
-    // เมธอดสำหรับดึงค่าดาเมจ
-    public float getLaserDamage() {
-        return super.skill1; // ใช้ค่า skill1 ที่เราส่งเข้ามาใน constructor
-    }
-
-    // --- เราจะเปลี่ยนเมธอดดั้งเดิม ---
-    
-    @Override
-    public float getSkill1(Cat cat) {
-        // เมธอดนี้จะไม่ทำดาเมจตรงๆ แล้ว แต่จะใช้เป็น "ตัวสั่ง" ให้เริ่มโจมตี
-        setState("attack");
-        return 0; // ไม่คืนค่าดาเมจ เพราะดาเมจจะเกิดตอนเลเซอร์โดนแมว
-    }
-
-    @Override
-    public float getSkill2(Cat cat) {
-        // (เผื่อไว้ ถ้ามีสกิล 2)
-        return cat.setHP(super.skill2); 
-    }
 }

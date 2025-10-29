@@ -9,7 +9,7 @@ public class CatBackHome extends JFrame {
         sceneManager = new SceneManager(getContentPane(), blue);
         sceneManager.showHomeScreen();
 
-        BGSound.playSound(0); // เล่นเสียงพื้นหลัง
+        Sound.playSound(0);
     }
 
     public static void main(String[] args) {

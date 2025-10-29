@@ -2,7 +2,7 @@ import java.awt.*;
 import javax.swing.*;
 
 public class Cat {
-    private Image imgCat; // รูปปัจจุบันของแมว
+    private Image imgCat;
     private Image[] stand = new Image[2];
     private Image[] walk = new Image[2];
     private Image[] jump = new Image[1];
@@ -11,11 +11,14 @@ public class Cat {
     private Image[] skill2img = new Image[1];
     private Image[] healimg = new Image[1];
     private Image[] dead = new Image[1];
+
     private boolean isJumping = false;
     private int jumpVelocity = 0;
-    private int Width = 143;
-    private int Height = 105;
-    private int standDelay = 600; // ms
+
+    private int width = 143;
+    private int height = 105;
+
+    private int standDelay = 600;
     private int walkDelay = 150;
     private int jumpDelay = 300;
     private int crouchDelay = 300;
@@ -23,43 +26,37 @@ public class Cat {
     private int skill2Delay = 300;
     private int healDelay = 300;
 
-    // --- ตัวแปรสถานะพิษ (Poison) ---
     private boolean isPoisoned = false;
-    private int poisonTicksLeft = 0; // (นับถอยหลัง 5 ครั้ง)
-    private int poisonTimer = 0;     // (ตัวนับเวลา 2 วินาที)
-    
-    // 2 วินาที (2000ms) / 30ms (ความเร็ว timer ของ Scene3) ≈ 67 ticks
-    private final int POISON_INTERVAL_TICKS = 67; 
-    private final int POISON_DAMAGE_PER_TICK = 10;
-    private final int POISON_TOTAL_TICKS = 5;
+    private int poisonNumLeft = 0;
+    private int poisonTimer = 0;
+    private final int poisonTime = 67;
+    private final int poisonDamage = 10;
+    private final int poisonNum = 5;
 
-    private float maxMP = 100;
-    private float maxHP = 100;
-    private int mpRegenCounter = 0;
-    private int mpRegenTicks = 5; //5*30 scene 3 = ? s re mp
+    private int maxMP = 100;
+    private int maxHP = 100;
 
-    private boolean facingRight = true; // true = หันขวา, false = หันซ้าย
+    private int mpRegenCount = 0;
+    private int mpRegenNum = 5;
 
-    private int frameIndex = 0; // เฟรมที่เล่นอยู่
-    private String state = "stand"; // สถานะปัจจุบัน: stand, walk, jump, crouch
+    private boolean direction = true;
+
+    private int indexFrame = 0;
+    private String state = "stand";
     private Timer animationTimer;
 
-    private float HP;
-    private float MP;
-    private final float skill1;
-    private final float skill2;
-    private final float heal;
+    private int HP;
+    private int MP;
+    private int skill1 = 20;
+    private int skill2 = 10;
+    private int heal = 20;
 
-    public int x, y; // ตำแหน่งบนหน้าจอ
+    public int x, y;
 
-    public Cat(float HP, float skill1, float skill2, float heal) {
+    public Cat() {
         this.HP = this.maxHP;
         this.MP = this.maxMP;
-        this.skill1 = skill1;
-        this.skill2 = skill2;
-        this.heal = heal;
 
-        // โหลดรูปอนิเมชัน (ตัวอย่างชื่อไฟล์)
         stand[0] = new ImageIcon("image/catStand1.png").getImage();
         stand[1] = new ImageIcon("image/catStand2.png").getImage();
 
@@ -79,32 +76,28 @@ public class Cat {
 
         imgCat = stand[0];
 
-        // ตั้ง Timer เพื่อเปลี่ยนเฟรมทุก 150ms
         animationTimer = new Timer(standDelay, e -> updateFrame());
         animationTimer.start();
     }
 
     private void updateFrame() {
-        if (state.equals("jump")) return;
-        Image[] currentFrames = getCurrentFrames();
+        if (state.equals("jump")) { return;}
+        Image[] currentFrame = getCurrentFrame();
         if (state.equals("skill1") || state.equals("skill2") || state.equals("heal")) {
-        // --- Logic สำหรับเล่นอนิเมชั่นครั้งเดียว (สำหรับโจมตี) ---
-        frameIndex++;
-        if (frameIndex >= currentFrames.length) {
-            // เมื่อเล่นจนจบ
-            frameIndex = 0; // รีเซ็ตเฟรม
-            setState("stand"); // กลับไปท่ายืน (ซึ่งจะเปลี่ยนรูปทันทีเพราะเราแก้ setState แล้ว)
+            indexFrame++;
+            if (indexFrame >= currentFrame.length) {
+                indexFrame = 0;
+                setState("stand");
+            } else {
+                imgCat = currentFrame[indexFrame];
+            }
         } else {
-            imgCat = currentFrames[frameIndex];
-        }
-         } else {
-        // --- Logic สำหรับเล่นวนซ้ำ (ยืน, เดิน, หมอบ) ---
-            frameIndex = (frameIndex + 1) % currentFrames.length;
-            imgCat = currentFrames[frameIndex];
+            indexFrame = (indexFrame + 1) % currentFrame.length;
+            imgCat = currentFrame[indexFrame];
         }
     }
 
-    private Image[] getCurrentFrames() {
+    private Image[] getCurrentFrame() {
         switch (state) {
             case "walk":
                 return walk;
@@ -125,7 +118,7 @@ public class Cat {
 
     public void jump() {
         if (!isJumping) {
-            jumpVelocity = -15; // ยกตัวขึ้น
+            jumpVelocity = -15;
             isJumping = true;
             imgCat = jump[0];
             setState("jump");
@@ -136,8 +129,8 @@ public class Cat {
         if (isJumping) {
             y += jumpVelocity;
             imgCat = jump[0];
-            jumpVelocity += 1; // gravity
-            if (y >= 330) {   // floor level
+            jumpVelocity += 1;
+            if (y >= 330) {
                  y = 330;
                  isJumping = false;
                  setState("stand");
@@ -147,38 +140,29 @@ public class Cat {
 
     public void draw(Graphics g, Component c) {
         updatePosition();
-        Graphics2D g2 = (Graphics2D) g;
-        // --- 1. เลือกขนาดภาพตามสถานะ ---
-    int currentWidth;
-    int currentHeight;
+        int currentWidth;
+        int currentHeight;
 
-    if (state.equals("skill1") || state.equals("skill2") || state.equals("heal")) {
-        currentWidth = 162;
-        currentHeight = Height;
-    } else {
-        currentWidth = Width;
-        currentHeight = Height;
+        if (state.equals("skill1") || state.equals("skill2") || state.equals("heal")) {
+            currentWidth = 162;
+            currentHeight = height;
+        } else {
+            currentWidth = width;
+            currentHeight = height;
+        }
+
+        if (direction) {
+            g.drawImage(imgCat, x, y, currentWidth, currentHeight, c);
+        } else {
+            g.drawImage(imgCat, x + currentWidth, y, -currentWidth, currentHeight, c);
+        }
     }
 
-    // --- 2. ใชขนาดที่เลือกในการวาด ---
-    if (facingRight) {
-        g2.drawImage(imgCat, x, y, currentWidth, currentHeight, c);
-    } else {
-        // พลิก horizontal
-        g2.drawImage(imgCat, x + currentWidth, y, -currentWidth, currentHeight, c);
-    }
-    }
-
-
-    // --------------------------
-    // สั่งเปลี่ยนสถานะอนิเมชัน
-    // --------------------------
     public void setState(String newState) {
         if (!state.equals(newState)) {
             state = newState;
-            frameIndex = 0;
+            indexFrame = 0;
 
-            // ปรับความเร็ว Timer ตาม state
             int delay;
             switch (state) {
                 case "walk":
@@ -197,75 +181,70 @@ public class Cat {
                     delay = standDelay; break;
             }
             animationTimer.setDelay(delay);
-            // --- 2 บรรทัดที่เพิ่มเข้ามา (สำคัญมาก!) ---
-            // 1. สั่งให้เปลี่ยนรูปเป็นเฟรมแรกของท่าใหม่ "ทันที"
-            imgCat = getCurrentFrames()[frameIndex]; 
-            // 2. สั่งให้ timer เริ่มนับใหม่ด้วย delay ค่าใหม่ "ทันที"
+
+            imgCat = getCurrentFrame()[indexFrame]; 
             animationTimer.restart();
         }
     }
 
-      // --------------------------
-    // เปลี่ยนทิศทาง
-    // --------------------------
     public void setDirection(boolean right) {
-        facingRight = right;
+        direction = right;
     }
 
-    public String getState() {
-        return this.state;
+    public boolean getDirection() {
+        return direction;
     }
 
-    // --------------------------
-    // ฟังก์ชันเกมเพลย์
-    // --------------------------
-
-    public void resetStats() {
+    public void resetStat() {
         this.HP = this.maxHP;
         this.MP = this.maxMP;
         this.isPoisoned = false;
-        this.poisonTicksLeft = 0;
+        this.poisonNumLeft = 0;
         this.poisonTimer = 0;
     }
 
-    public float getSkill1() {
+    public int getSkill1() {
         return this.skill1;
     }
 
-    public float getSkill2() {
+    public int getSkill2() {
         return this.skill2;
     }
 
-    public float getHeal() {
+    public int getHeal(){
+        return this.heal;
+    }
+
+    public int Heal() {
         this.HP += this.heal;
         return this.HP;
     }
 
-    public float setHP(float damage) {
+    public int setHP(int damage) {
         this.HP -= damage;
         return this.HP;
     }
 
-    public float getHP(){
+    public int getHP(){
         return this.HP;
     }
 
-    public float getMaxHP(){
+    public int getMaxHP(){
         return this.maxHP;
     }
 
-    public float getMaxMP(){
+    public int getMaxMP(){
         return this.maxMP;
     }
 
-    public float getMP(){
+    public int getMP(){
         return this.MP;
     }
 
     public void updateMP() {
-        mpRegenCounter++;
-        if (mpRegenCounter >= mpRegenTicks) {
-            mpRegenCounter = 0;
+        mpRegenCount++;
+        if (mpRegenCount >= mpRegenNum) {
+            mpRegenCount = 0;
             if (this.MP < this.maxMP) {
                 this.MP += 1;
             }
@@ -281,7 +260,7 @@ public class Cat {
     }
 
     public boolean useSkill2() {
-        if (this.MP >= 30) { // ใช้ MP 30 (เท่าสกิลแรก)
+        if (this.MP >= 30) {
             this.MP -= 30;
             return true;
         }
@@ -289,62 +268,92 @@ public class Cat {
     }
 
     public boolean useHeal() {
-        if (this.MP >= 40) { // ใช้ MP 10
+        if (this.MP >= 40) {
             this.MP -= 40;
             return true;
         }
         return false;
     }
 
-    // --- เมธอดสำหรับระบบพิษ (เพิ่มใหม่) ---
 
-    // 1. เมธอดสั่งให้ติดพิษ (เรียกจาก Scene3)
     public void applyPoison() {
-        if (isPoisoned) return; // ถ้าติดพิษอยู่แล้ว, ไม่ต้องทำอะไรซ้ำ
+        if (isPoisoned) return;
 
         isPoisoned = true;
-        poisonTicksLeft = POISON_TOTAL_TICKS; // ตั้งค่าให้โดน 5 ครั้ง
-        poisonTimer = POISON_INTERVAL_TICKS;  // เริ่มนับ 2 วินาทีแรก
+        poisonNumLeft = poisonNum;
+        poisonTimer = poisonTime;
         
-        SFXSound.playSound(6); // <--- เล่นเสียง (เมื่อคุณใส่ไฟล์)
+        Sound.playSoundEffect(6);
         System.out.println("Cat is POISONED!");
     }
 
-    // 2. เมธอดอัปเดตสถานะพิษ (เรียกทุกเฟรมจาก Scene3)
     public void updatePoisonStatus() {
-        if (!isPoisoned) return; // ถ้าไม่ติดพิษ, ออกทันที
+        if (!isPoisoned) return;
 
-        poisonTimer--; // นับถอยหลังทุกเฟรม
+        poisonTimer--;
         
         if (poisonTimer <= 0) {
-            // --- เมื่อครบ 2 วินาที ---
-            this.setHP(POISON_DAMAGE_PER_TICK); // ลดเลือด 10
+            this.setHP(poisonDamage);
             System.out.println("Poison tick! HP: " + this.getHP());
             
-            poisonTicksLeft--; // ลดจำนวนครั้งที่เหลือ
+            poisonNumLeft--;
             
-            if (poisonTicksLeft <= 0) {
-                // --- ถ้าครบ 5 ครั้ง ---
-                isPoisoned = false; // หายพิษ
+            if (poisonNumLeft <= 0) {
+                isPoisoned = false;
                 System.out.println("Poison has worn off.");
             } else {
-                // --- ถ้ายังไม่ครบ 5 ครั้ง ---
-                poisonTimer = POISON_INTERVAL_TICKS; // รีเซ็ตตัวนับ 2 วินาทีใหม่
+                poisonTimer = poisonTime;
             }
         }
     }
 
-    // 3. เมธอดสำหรับเช็กสถานะ (เพื่อวาดไอคอน)
     public boolean isPoisoned() {
         return isPoisoned;
     }
-    // --- สิ้นสุดเมธอดระบบพิษ ---
 
     public int getWidth(){
-        return this.Width;
+        return this.width;
     }
 
     public int getHeight(){
-        return this.Height;
+        return this.height;
+    }
+
+    public String getState() {
+        return this.state;
+    }
+
+    public void drawHPBar(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g;
+        if (HP < 0) HP = 0;
+        if (HP > maxHP) HP = maxHP;
+        int barWidth = 300;
+        int barHeight = 25; 
+        int x = 60, y = 30;
+        int hpWidth = (int) (( (double)HP / maxHP) * barWidth);
+        g2.setColor(Color.WHITE);
+        g2.fillRect(x, y, barWidth, barHeight);
+        g2.setColor(new Color(34, 64, 111));
+        g2.fillRect(x, y, hpWidth, barHeight);
+        g2.drawRect(x, y, barWidth, barHeight);
+        g2.setFont(new Font("Comic Sans MS", Font.BOLD, 20));
+        g2.drawString("HP", x - 40, y + 20);
+    }
+
+    public void drawMPBar(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g;
+        if (MP < 0) MP = 0;
+        if (MP > maxMP) MP = maxMP;
+        int barWidth = 250;
+        int barHeight = 15;
+        int x = 60, y = 65; 
+        int mpWidth = (int) (( (double)MP / maxMP) * barWidth);
+        g2.setColor(Color.WHITE);
+        g2.fillRect(x, y, barWidth, barHeight);
+        g2.setColor(new Color(34, 64, 111));
+        g2.fillRect(x, y, mpWidth, barHeight);
+        g2.drawRect(x, y, barWidth, barHeight);
+        g2.setFont(new Font("Comic Sans MS", Font.BOLD, 20));
+        g2.drawString("MP", x - 40, y + 20);
     }
 }

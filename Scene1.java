@@ -3,27 +3,23 @@ import java.awt.event.*;
 import javax.swing.*;
 
 public class Scene1 extends JPanel implements ActionListener {
-    private Cat cat;
-    private Floor floor;
-    private Timer timer;
+    protected Cat cat;
+    protected Timer timer;
+    protected SceneManager manager; 
 
     public Scene1(SceneManager manager) {
-        setLayout(null); // ใช้ตำแหน่งแบบอิสระ
+        setLayout(null);
         setBackground(Color.WHITE);
+        this.manager = manager;
 
-        // สร้างวัตถุต่าง ๆ
-        floor = new Floor();
-        cat = new Cat(100, 20, 10, 15);
+        cat = new Cat();
 
-        // จัดตำแหน่งเริ่มต้นของแมว
         cat.x = 100;
         cat.y = 330;
 
-        // ตั้ง timer ให้ repaint ทุก 30ms
         timer = new Timer(30, this);
         timer.start();
 
-        // ควบคุมการเคลื่อนไหวด้วยคีย์บอร์ด
         addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -32,7 +28,7 @@ public class Scene1 extends JPanel implements ActionListener {
                         cat.setDirection(true);
                         cat.x += 10;
                         if (cat.x + cat.getWidth()/2 > 800) {
-                            manager.showScene2(cat);
+                            nextScene();
                         }
                         cat.setState("walk");
                         break;
@@ -69,7 +65,19 @@ public class Scene1 extends JPanel implements ActionListener {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        floor.draw(g);
+        drawFloor(g);
         cat.draw(g, this);
+    }
+
+    protected void nextScene(){
+        manager.showScene2(cat);
+    }
+
+    public void drawFloor(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
+        setPreferredSize(new Dimension(800, 600));
+        g2d.setStroke(new BasicStroke(3));
+        g2d.setColor(new Color(34, 64, 111));
+        g2d.drawLine(0, 436, 800, 436);
     }
 }
