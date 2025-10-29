@@ -30,6 +30,12 @@ public abstract class SceneAsset extends JPanel {
     protected SceneManager manager;
     protected Timer timer;
 
+    abstract protected void updateEnemyAI();
+    abstract protected void handleD(KeyEvent e);
+    abstract protected void handleJ(KeyEvent e);
+    abstract protected void handleK(KeyEvent e);
+    abstract protected void handleL(KeyEvent e);
+
     public void drawFloor(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
         setPreferredSize(new Dimension(800, 600));
@@ -255,14 +261,4 @@ public abstract class SceneAsset extends JPanel {
             }
         });
     }
-
-    abstract protected void updateEnemyAI();
-
-    abstract protected void handleD(KeyEvent e);
-
-    abstract protected void handleJ(KeyEvent e);
-
-    abstract protected void handleK(KeyEvent e);
-
-    abstract protected void handleL(KeyEvent e);
 }

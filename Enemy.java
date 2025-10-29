@@ -31,6 +31,11 @@ public abstract class Enemy {
         this.height = height;
     }
 
+    abstract protected void updateFrame();
+    abstract protected Image[] getCurrentFrame();
+    abstract public void draw(Graphics g, Component c);
+    abstract public void setState(String newState);
+
     public int getHP() {
         return this.HP;
     }
@@ -58,11 +63,6 @@ public abstract class Enemy {
     public void resetStat() {
         this.HP = this.maxHP;
     }
-
-    abstract protected void updateFrame();
-    abstract protected Image[] getCurrentFrame();
-    abstract public void draw(Graphics g, Component c);
-    abstract public void setState(String newState);
 
     public String getState() {
         return state;
